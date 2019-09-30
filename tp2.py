@@ -100,6 +100,7 @@ def pos_prob_inv(A,g1,g2,g3,t4_act):
     a1 = 70
     a2 = 360
     d4 = 380
+    tol = 1e-12
     
     px = A[0,3]
     py = A[1,3]
@@ -147,11 +148,29 @@ def pos_prob_inv(A,g1,g2,g3,t4_act):
     R_p = matmul(R_3_0.T,R) # En teoría, R_p = R_6_3 
     
     
+    """
+    ATENCIÓN: tengo que agregar la siguiente linea porque tenía el siguiente
+    problema. Cuando probaba la funcion directa con todos los valores de t_i = 0
+    excepto t2 (por ejemplo t2 = 45) obtenia un resultado y cuando
+    realizaba el paso inverso. t4 y t6 resultaban iguales en módulo pero con 
+    signo contrario. Probando encontré que cuando R_p era muy similar a la identidad
+    esto es, los elementos de la diagonal eran uno pero los elementos fuera de
+    la diagonal eran del orden de 1e-15, este error sucedía. Utilizando los mismos
+    valores encontré que si reemplazaba R_p por exactamente identidad, obtenía resultados
+    coherentes. Por lo tanto decidí "mandar" a cero cualquier elemento de R_p
+    que sea menor a una tolerancia.
+    """    
+    R_p[absolute(R_p)<tol] = 0
+    
+    
     t_4_5_6 = RMat2Eul(R_p,g3,t4_act)
     
     t_1_2_3 = array([t1,t2,t3]) * 180/pi
+    t_1_2_3[absolute(t_1_2_3)<tol]  = 0 # agrego esto, no porque exista un error
+                                        # sino para que sea más fácil visualizar
+                                        # el resultado.
     
-    theta_vec = concatenate ([t_1_2_3, t_4_5_6])
+    theta_vec = concatenate([t_1_2_3, t_4_5_6])
     
     return theta_vec
 
@@ -167,23 +186,25 @@ pos_prob_inv(A,*g,t4_act)
 pos_prob_inv(A,*g,t4_act)
 
 
+
+t1 = 0; t2 = 45; t3 = 0; t4 = 0; t5 = 0; t6 = 0;
 [A,g,t4_act]= pos_prob_dir(0,45,0,0,0,0)
 pos_prob_inv(A,*g,t4_act)
 
 
-[A,g,t4_act]= pos_prob_dir(0,0,45,0,0,0)
+[A,g,t4_act]= pos_prob_dir(0,0,45,45,0,0)
 pos_prob_inv(A,*g,t4_act)
 
 
-[A,g,t4_act]= pos_prob_dir(0,0,0,45,0,0)
+[A,g,t4_act]= pos_prob_dir(0,1,-1,45,2,-2)
 pos_prob_inv(A,*g,t4_act)
 
 [A,g,t4_act] = pos_prob_dir(0,0,0,0,45,0)
 pos_prob_inv(A,*g,t4_act)
 
 
-[A,g] = pos_prob_dir(0,0,0,0,0,45)
-pos_prob_inv(A,*g)
+[A,g,t4_act]= pos_prob_dir(0,0,0,0,0,45)
+pos_prob_inv(A,*g,t4_act)
 
 
 
