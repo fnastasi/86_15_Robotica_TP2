@@ -1,0 +1,7 @@
+Variables articulres de prueba - se usa ',' como separador cuando se levanta el archivo
+0,0,0,0,0,0
+0,45,0,0,0,0
+0,0,45,0,0,0
+0,0,0,45,0,0
+0,0,0,0,45,0
+0,0,0,0,0,45
