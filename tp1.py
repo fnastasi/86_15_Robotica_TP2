@@ -72,8 +72,11 @@ def RMat2Eul(R=eye(3),sg_tita = 1,phi_act = 0):
     sx = R[0][1]; sy = R[1][1]; sz = R[2][1]
     ax = R[0][2]; ay = R[1][2]; az = R[2][2]
     
+    tol = 1e-12
+    
     # Si los valores ax y ay no son cero calculo las 2 posibles soluciones
-    if(ax != 0 or ay != 0):
+    #if(ax != 0 or ay != 0):
+    if( absolute(ax) > tol or absolute(ay) > tol): # Se va a usar esta línea en ves de != 0 para evitar futuros errores
         # Calculo las 2 posibles soluciones de phi teniendo en cuenta que 
         # arctan2 devuelve valores entre -pi y pi y que los valores de phi también
         # están definidos en ese rango                
