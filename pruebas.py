@@ -39,7 +39,7 @@ for ind, var_art in enumerate(datos_prueba):
     # Calculo los ángulos de euler a partir de la matriz de rotación obtenida
     var_art_res = pos_prob_inv(A,*g,*t_act)
     #print(var_art_res)
-    tol = 1e-6 # Tolerancia
+    tol = 1e-3 # Tolerancia
     
     
     
@@ -62,3 +62,7 @@ for ind, var_art in enumerate(datos_prueba):
     
     if ( not np.all(np.abs(var_art_res - var_art) < tol)):
         print("Error para los ángulos que se encuentran en la línea: " + str(ind + 2))
+        print("var_art= ")
+        print(var_art)
+        print("var_art_res= ")
+        print(var_art_res)

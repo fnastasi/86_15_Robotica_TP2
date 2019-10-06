@@ -9,7 +9,12 @@ Created on Wed Sep  4 08:39:11 2019
 # In[]
 # Se importa la biblioteca numpy para aplicar operaciones similares a las que se usan en matlab
 from numpy import *
+import numpy as np
 
+
+# In[]
+
+tol = 1e-6
 # In[]
 
 """
@@ -36,18 +41,24 @@ def Eul2RMat(phi=0, tita=0,psi=0):
     # de numpy
     R_z_phi = [[cos(phi), -sin(phi), 0],[sin(phi), cos(phi), 0],[0,0,1]]
     R_z_phi = array(R_z_phi)
+    #R_z_phi = np.round(array(R_z_phi),cant_de_decimales)
     #print(R_z_phi)
     
     R_y_tita = [[cos(tita), 0, sin(tita)], [0,1,0] , [-sin(tita), 0, cos(tita)]]
     R_y_tita = array(R_y_tita)
+    #R_y_tita = np.round(array(R_y_tita),cant_de_decimales)
     #print(R_y_tita)
     
     R_z_psi = [[cos(psi), -sin(psi), 0],[sin(psi), cos(psi), 0],[0,0,1]]
-    R_z_psi = array(R_z_psi)
+    R_z_psi =array(R_z_psi)
+    #R_z_psi = np.round(array(R_z_psi),cant_de_decimales)
+    
     #print(R_z_psi)
     
     # Matriz de rotación calculada como el producto de las 3 matrices
     R = linalg.multi_dot([R_z_phi,R_y_tita,R_z_psi])
+    #R = np.round(linalg.multi_dot([R_z_phi,R_y_tita,R_z_psi]),cant_de_decimales)
+    
     # El índice de configuración
     sg_tita = sign(tita)
     
@@ -72,10 +83,11 @@ def RMat2Eul(R=eye(3),sg_tita = 1,phi_act = 0):
     sx = R[0][1]; sy = R[1][1]; sz = R[2][1]
     ax = R[0][2]; ay = R[1][2]; az = R[2][2]
     
-    tol = 1e-12
     
     # Si los valores ax y ay no son cero calculo las 2 posibles soluciones
+    
     #if(ax != 0 or ay != 0):
+    #if(round(ax,18) != 0 or round(ay,18) != 0):
     if( absolute(ax) > tol or absolute(ay) > tol): # Se va a usar esta línea en ves de != 0 para evitar futuros errores
         # Calculo las 2 posibles soluciones de phi teniendo en cuenta que 
         # arctan2 devuelve valores entre -pi y pi y que los valores de phi también
@@ -101,9 +113,10 @@ def RMat2Eul(R=eye(3),sg_tita = 1,phi_act = 0):
         ang = array([phi1,tita1,psi1]) if (sg_tita == sign(tita1) )  else array([phi2,tita2,psi2])
     else:
         # Si ax = ay = 0, entonces calculo el valor de psi a partir del valor de phi ingresados
-        phi_act = phi_act*pi/180 
+        phi_act= phi_act*pi/180        
         psi = arctan2(-sin(phi_act)*nx + cos(phi_act)*ny ,-sin(phi_act)*sx + cos(phi_act)*sy)
-        ang = array([phi_act,0,psi])
-    
-    return ang*180/pi 
+        tita = -pi if sg_tita < 0 else (pi if sg_tita > 0 else 0) 
+        ang = array([phi_act,tita,psi])
+    #return ang*180/pi 
+    return ang*180/pi
         

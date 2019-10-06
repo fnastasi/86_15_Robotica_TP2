@@ -22,6 +22,7 @@ Ejemplo de uso:
 # In[]
 
 from numpy import *
+import numpy as np
 from tp1 import *
 # In[]
 # Definición de parámetros (en mm)
@@ -29,6 +30,8 @@ from tp1 import *
 a1 = 70
 a2 = 360
 d4 = 380
+
+tol = 1e-6
 
 
 # In[]
@@ -50,13 +53,14 @@ def DH_hom_mat(theta,d,a,alpha):
     #                                    [ 0 0 0 | 1 ]
     
     A = concatenate((A,array([[0,0,0,1]])), axis = 0) 
+    A[absolute(A)<tol] = 0
     return A
 
 # In[]
     
 # Debug DH_hom_mat
-    theta = 0
-    alpha = 0
+    theta = pi/2
+    alpha = pi
     a =1
     d =1
 
@@ -65,10 +69,8 @@ def DH_hom_mat(theta,d,a,alpha):
 
 def pos_prob_dir(t1, t2, t3, t4, t5, t6):    
     
-    a1 = 70
-    a2 = 360
-    d4 = 380
-
+    t1_act =t1
+    t4_act = t4
     [t1,t2,t3,t4,t5, t6] = array([t1,t2,t3,t4,t5, t6])*pi/180
     
     A_1_0  = DH_hom_mat (t1,0,a1, -pi/2)
@@ -88,32 +90,29 @@ def pos_prob_dir(t1, t2, t3, t4, t5, t6):
     g1 = sign(d4*sin(t2+t3) +a2*cos(t2) + a1)
     g2 = sign(cos(t3))
     g3 = sign(t5)
-    t1_act =t1*180/pi
-    t4_act = t4*180/pi
     
+    
+    #A[absolute(A)<tol] = 0
     return (A,[g1,g2,g3],[t1_act,t4_act])
 
 # In[]
 # problema inverso: los ángulos se devuelven en grados
 
 def pos_prob_inv(A,g1,g2,g3,t1_act=0,t4_act=0):
-    
-    a1 = 70
-    a2 = 360
-    d4 = 380
-    tol = 1e-12
-    
+
     px = A[0,3]
     py = A[1,3]
     pz = A[2,3]
     
-    # cálculo de theta 1
     
+    # cálculo de theta 1
+    t1_act = t1_act*pi/180
     t1 = arctan2(g1*py,g1*px) if (absolute(px)> tol or absolute(py)> tol ) else t1_act
     
     # cálculo de theta 3
-    s3 = ( (px*cos(t1) + py*sin(t1) - a1)**2 + pz**2 -d4**2 -a2**2 ) / (2*a2*d4)
-    if absolute(s3) < 1:
+    s3 = ((px*cos(t1) + py*sin(t1) - a1)**2 + pz**2 -d4**2 -a2**2 ) / (2*a2*d4)
+    #s3 = np.round( s3 ,cant_de_decimales)
+    if absolute(s3) <= 1:
         t3 = arctan2(s3,g2*(1-s3**2)**(0.5)) 
     else:
         print("Posición imposible de obtener!! \n Verificar distancias px, py, pz")
@@ -147,14 +146,19 @@ def pos_prob_inv(A,g1,g2,g3,t1_act=0,t4_act=0):
     A_3_2  = DH_hom_mat (t3,0,0, pi/2)
     
     A_3_0 = linalg.multi_dot([A_1_0, A_2_1, A_3_2])
-    
+    A_3_0[absolute(A_3_0)<tol] =0
     # Obtengo R_3_0 y la matriz de rotación de A
     R_3_0 = A_3_0[0:3,0:3]
     R = A[0:3,0:3]
     # Obtengo la matriz a la que es igual R_6_3 ya que estoy multiplicando
     # la inversa de R_3_0 (.T aplica la operación de transponer) y R
+    
+    #R_3_0[absolute(R_3_0)<tol] = 0
+    #R[absolute(R)<tol] = 0
+    
     R_p = matmul(R_3_0.T,R) # En teoría, R_p = R_6_3 
     
+    #print(R_p)
     
     """
     ATENCIÓN: tengo que agregar la siguiente linea porque tenía el siguiente
@@ -171,65 +175,154 @@ def pos_prob_inv(A,g1,g2,g3,t1_act=0,t4_act=0):
     #R_p[absolute(R_p)<tol] = 0 # Los elementos de R_p que sean menor que tol
                                # se asignan igual a cero.
     
-    
-    t_4_5_6 = RMat2Eul(R_p,g3,t4_act) # calculos los ángulos de Euler usango
+    t_4_5_6= RMat2Eul(R_p,g3,t4_act) # calculos los ángulos de Euler usango
                                       # g3 que es el signo de t5 y t4_act
                                       # que es el ángulo t4 actual.
     
     # Pongo a t1, t2 y t3 en un vector
-    t_1_2_3 = array([t1,t2,t3]) * 180/pi
+    #t_1_2_3 = array([t1,t2,t3]) * 180/pi
+    t_1_2_3 = array([t1,t2,t3])*180/pi
     #t_1_2_3[absolute(t_1_2_3)<tol]  = 0 # agrego esto, no porque exista un error
                                         # sino para que sea más fácil visualizar
                                         # el resultado.
     
     # Junto todos los resultados
-    theta_vec = concatenate([t_1_2_3, t_4_5_6])
+    return concatenate([t_1_2_3, t_4_5_6])
     
-    return theta_vec
+     
 
 # In[]
-    
+"""    
 # Pruebas simples
     
-[A,g,t_act] = pos_prob_dir(0,0,0,0,0,0)
+#### PRUEBA 1 ####
+[A,g,t_act]= pos_prob_dir(0,0,0,0,0,0)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
 
-
-[A,g,t4_act]= pos_prob_dir(-135,0,0,0,0,0)
-pos_prob_inv(A,*g,*t4_act)
-
-
-
-t1 = 0; t2 = 45; t3 = 0; t4 = 0; t5 = 0; t6 = 0;
+#### PRUEBA 2 ####
 [A,g,t_act]= pos_prob_dir(0,45,0,0,0,0)
-g1=g[0];g2=g[1];g3=g[2];
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
 
 
-[A,g,t_act]= pos_prob_dir(0,0,45,45,0,0)
+#### PRUEBA 3 ####
+[A,g,t_act]= pos_prob_dir(0,0,45,0,0,0)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
+
+#### PRUEBA 4 ####
+[A,g,t_act]= pos_prob_dir(0,0,0,45,0,0)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
 
 
-[A,g,t_act]= pos_prob_dir(0,1,-1,45,2,-2)
+#### PRUEBA 5 ####
+[A,g,t_act]= pos_prob_dir(0,0,0,0,45,0)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
 
-[A,g,t_act] = pos_prob_dir(0,0,0,0,45,0)
-pos_prob_inv(A,*g,*t_act)
-
-
+#### PRUEBA 6 ####
 [A,g,t_act]= pos_prob_dir(0,0,0,0,0,45)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
 
 
 
 
+### PRUEBA 7 ####       [  0.  45.  90.   0.   0. 135.]
+[A,g,t_act]= pos_prob_dir(0,45,90,0,0,135)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
+pos_prob_inv(A,1,-1,-1,*t_act)
 
-[A,g,t_act] = pos_prob_dir(-45,45,45,0,0,0)
-pos_prob_inv(A,*g)
 
-[A,g,t_act] = pos_prob_dir(0,-45,0,0,0,0)
-pos_prob_inv(A,*g)
+### PRUEBA 8 ####       [  15. -180.    0. -135.    0.  -45.]
+[A,g,t_act]= pos_prob_dir(15,-180,0,-135,0,-45)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
 
-[A,g,t_act]= pos_prob_dir(45,-45,-45,0,0,0)
-pos_prob_inv(A,*g)
 
+### PRUEBA 9 ####       [   0.  -45.   45.  135.  180. -180.]
+[A,g,t_act]= pos_prob_dir(0,-45,45,135,180,-180)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
+
+
+
+[A,g,t_act]= pos_prob_dir(180,45,-180,0,0,0)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
+
+
+
+[A,g,t_act]= pos_prob_dir(0,-45,45,135,180,-180)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
+
+R,g = Eul2RMat(135,-180,-180)
+RMat2Eul(R,g,135)
+
+
+R,g = Eul2RMat(135,180,-180)
+RMat2Eul(R,g,135)*180/pi       
+
+
+R,g = Eul2RMat(0,45,0)
+RMat2Eul(R,g,0)*180/pi       
+
+phi = 135
+tita=-180
+psi=-180
+
+
+
+
+
+0,45,90,0,0,135
+
+[A,g,t_act]= pos_prob_dir(0,45,90,0,0,135)
+A
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+A[absolute(A)<tol] = 0
+pos_prob_inv(A,*g,*t_act)
+
+
+0,-45,45,135,180,-180
+
+[A,g,t_act]= pos_prob_dir(0,-45,-45,135,180,-180)
+
+A
+g1=g[0];g2=g[1];g3=g[2];
+t1_act = t_act[0];t4_act = t_act[1];
+
+R,g = Eul2RMat(135,-180,-180)
+RMat2Eul(R,g,135)*180/pi       #-> Da mal
+R[absolute(R)< tol] = 0
+
+
+
+R,g = Eul2RMat(45,-180,-45)
+RMat2Eul(R,g,45)       #-> Da mal
+
+
+
+
+R,g = Eul2RMat(135,180,-180)
+RMat2Eul(R,g,135)*180/pi       #-> Da mal
+
+
+
+"""
