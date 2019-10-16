@@ -60,8 +60,10 @@ def Eul2RMat(phi=0, tita=0,psi=0):
     #R = np.round(linalg.multi_dot([R_z_phi,R_y_tita,R_z_psi]),cant_de_decimales)
     
     # El índice de configuración
-    sg_tita = sign(tita)
+    #sg_tita = sign(tita)
     
+    
+    sg_tita = 1 if sign(tita) >= 0 else -1
     return R,sg_tita 
 
 
@@ -115,7 +117,8 @@ def RMat2Eul(R=eye(3),sg_tita = 1,phi_act = 0):
         # Si ax = ay = 0, entonces calculo el valor de psi a partir del valor de phi ingresados
         phi_act= phi_act*pi/180        
         psi = arctan2(-sin(phi_act)*nx + cos(phi_act)*ny ,-sin(phi_act)*sx + cos(phi_act)*sy)
-        tita = -pi if sg_tita < 0 else (pi if sg_tita > 0 else 0) 
+        #tita = -pi if sg_tita < 0 else (pi if sg_tita > 0 else 0) 
+        tita = -pi if sg_tita < 0 else 0  ## Prueba despues de que mando corrección tp2
         ang = array([phi_act,tita,psi])
     #return ang*180/pi 
     return ang*180/pi

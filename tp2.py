@@ -58,12 +58,13 @@ def DH_hom_mat(theta,d,a,alpha):
 
 # In[]
     
-# Debug DH_hom_mat
+""" 
+Debug DH_hom_mat
     theta = pi/2
     alpha = pi
     a =1
     d =1
-
+"""
 # In[]
 # Problema directo: angulos deben estar en grados
 
@@ -153,27 +154,10 @@ def pos_prob_inv(A,g1,g2,g3,t1_act=0,t4_act=0):
     # Obtengo la matriz a la que es igual R_6_3 ya que estoy multiplicando
     # la inversa de R_3_0 (.T aplica la operación de transponer) y R
     
-    #R_3_0[absolute(R_3_0)<tol] = 0
-    #R[absolute(R)<tol] = 0
-    
     R_p = matmul(R_3_0.T,R) # En teoría, R_p = R_6_3 
     
     #print(R_p)
     
-    """
-    ATENCIÓN: tengo que agregar la siguiente linea porque tenía el siguiente
-    problema. Cuando probaba la funcion directa con todos los valores de t_i = 0
-    excepto t2 (por ejemplo t2 = 45) obtenia un resultado y cuando
-    realizaba el paso inverso. t4 y t6 resultaban iguales en módulo pero con 
-    signo contrario. Probando encontré que cuando R_p era muy similar a la identidad
-    esto es, los elementos de la diagonal eran uno pero los elementos fuera de
-    la diagonal eran del orden de 1e-15, este error sucedía. Utilizando los mismos
-    valores encontré que si reemplazaba R_p por exactamente identidad, obtenía resultados
-    coherentes. Por lo tanto decidí "mandar" a cero cualquier elemento de R_p
-    que sea menor a una tolerancia.
-    """    
-    #R_p[absolute(R_p)<tol] = 0 # Los elementos de R_p que sean menor que tol
-                               # se asignan igual a cero.
     
     t_4_5_6= RMat2Eul(R_p,g3,t4_act) # calculos los ángulos de Euler usango
                                       # g3 que es el signo de t5 y t4_act
@@ -249,6 +233,8 @@ pos_prob_inv(A,1,-1,-1,*t_act)
 g1 = g[0];g2 = g[1];g3 = g[2];
 t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
+[A_2,g_2,t_act_2]= pos_prob_dir(*pos_prob_inv(A,*g,*t_act))
+(A -A_2)< tol # Devuelve una matriz con sólo valores True
 
 
 ### PRUEBA 9 ####       [   0.  -45.   45.  135.  180. -180.]
@@ -259,69 +245,48 @@ pos_prob_inv(A,*g,*t_act)
 
 
 
-[A,g,t_act]= pos_prob_dir(180,45,-180,0,0,0)
+
+### Prueba TP 1 ###
+# Estos ángulos corresponden a los valores que se deben tomar en la figura donde 
+# tomaron las ternas
+
+[A,g,t_act]= pos_prob_dir(0,-90,180,0,0,0)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
+pos_prob_inv(A,1,-1,0,*t_act)
+
+
+### Prueba TP 2 ###
+[A,g,t_act]= pos_prob_dir(0,0,0,0,90,0)
+g1 = g[0];g2 = g[1];g3 = g[2];
+t1_act=t_act[0];t4_act=t_act[1];
+pos_prob_inv(A,*g,*t_act)
+pos_prob_inv(A,-1,-1,0,*t_act)
+
+
+### Prueba TP 3 ###
+[A,g,t_act]= pos_prob_dir(30,30,30,30,30,30)
 g1 = g[0];g2 = g[1];g3 = g[2];
 t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
 
 
+pos_prob_inv(A,-1,1,1,*t_act) # Este valor da que |sin(theta3)| > 1
+g1 = -1;g2 = -1;g3 = 1;
 
-[A,g,t_act]= pos_prob_dir(0,-45,45,135,180,-180)
+
+
+
+
+### Prueba luego de corrección ###
+
+[A,g,t_act]= pos_prob_dir(0,-90,180,0,0,0)
 g1 = g[0];g2 = g[1];g3 = g[2];
 t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
+pos_prob_inv(A,1,1,0,0,0)
 
-R,g = Eul2RMat(135,-180,-180)
-RMat2Eul(R,g,135)
-
-
-R,g = Eul2RMat(135,180,-180)
-RMat2Eul(R,g,135)*180/pi       
-
-
-R,g = Eul2RMat(0,45,0)
-RMat2Eul(R,g,0)*180/pi       
-
-phi = 135
-tita=-180
-psi=-180
-
-
-
-
-
-0,45,90,0,0,135
-
-[A,g,t_act]= pos_prob_dir(0,45,90,0,0,135)
-A
-g1 = g[0];g2 = g[1];g3 = g[2];
-t1_act=t_act[0];t4_act=t_act[1];
-A[absolute(A)<tol] = 0
-pos_prob_inv(A,*g,*t_act)
-
-
-0,-45,45,135,180,-180
-
-[A,g,t_act]= pos_prob_dir(0,-45,-45,135,180,-180)
-
-A
-g1=g[0];g2=g[1];g3=g[2];
-t1_act = t_act[0];t4_act = t_act[1];
-
-R,g = Eul2RMat(135,-180,-180)
-RMat2Eul(R,g,135)*180/pi       #-> Da mal
-R[absolute(R)< tol] = 0
-
-
-
-R,g = Eul2RMat(45,-180,-45)
-RMat2Eul(R,g,45)       #-> Da mal
-
-
-
-
-R,g = Eul2RMat(135,180,-180)
-RMat2Eul(R,g,135)*180/pi       #-> Da mal
 
 
 
