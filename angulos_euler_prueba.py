@@ -11,7 +11,7 @@ Created on Tue Sep 10 11:23:54 2019
 # Se importa la biblioteca numpy para aplicar operaciones similares a las que se usan en matlab
 # Adenás esta biblioteca tiene funciones para cargar datos desde un archivo csv
 import numpy as np # importa numpy y se puede acceder a la biblioteca con el apodo np
-from tp1 import * # Importa todas las funciones del archivo 'tp1.py'
+from tp1_modificado import * # Importa todas las funciones del archivo 'tp1.py'
 # In[]
 
 # Cargo el archivo de prueba con la función loadtxt
@@ -58,6 +58,10 @@ for ind, Euler_ang in enumerate(datos_prueba):
     
     if ( not np.all(np.abs(Euler_ang_res - Euler_ang) < tol)):
         print("Error para los ángulos que se encuentran en la línea: " + str(ind + 2))
+        print("Ángulos:")
+        print(Euler_ang)
+        print("Resultado:")
+        print(Euler_ang_res)
         
 
 # In[]
@@ -76,7 +80,7 @@ from scipy.spatial.transform import Rotation as Rot
        
 # Cargo el archivo de prueba con la función loadtxt
 file_name = "angulos_prueba.txt"
-datos_prueba = np.loadtxt(file_name, delimiter=',', skiprows=1) 
+datos_prueba = np.loadtxt(file_name, delimiter=',', skiprows=1,comments='#') 
         
 
 

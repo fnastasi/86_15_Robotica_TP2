@@ -23,7 +23,7 @@ Ejemplo de uso:
 
 from numpy import *
 import numpy as np
-from tp1 import *
+from tp1_modificado import *
 # In[]
 # Definición de parámetros (en mm)
 
@@ -40,6 +40,12 @@ tol = 1e-6
 
 # ángulos deben estar en radianes
 def DH_hom_mat(theta,d,a,alpha):
+    
+    # Se ponen en rango [-180,180)los ángulos
+    #theta = get_in_range(theta)
+    #alpha = get_in_range(alpha)
+    
+    
     R = array(
         [[cos(theta), -sin(theta)*cos(alpha), sin(theta)*sin(alpha)],
         [sin(theta), cos(theta)*cos(alpha), -cos(theta)*sin(alpha)],
@@ -69,6 +75,9 @@ Debug DH_hom_mat
 # Problema directo: angulos deben estar en grados
 
 def pos_prob_dir(t1, t2, t3, t4, t5, t6):    
+    # Se ponen en rango [-180,180)los ángulos
+    #t1 = get_in_range(t1);t2 = get_in_range(t2);t3 = get_in_range(t3);
+    #t4 = get_in_range(t4);t5 = get_in_range(t5);t6 = get_in_range(t6);
     
     t1_act =t1
     t4_act = t4
@@ -88,16 +97,15 @@ def pos_prob_dir(t1, t2, t3, t4, t5, t6):
     
     A = linalg.multi_dot([A_1_0, A_2_1, A_3_2, A_4_3, A_5_4, A_6_5])
     
-    g1 = sign(d4*sin(t2+t3) +a2*cos(t2) + a1)
-    g2 = sign(cos(t3))
-    g3 = sign(t5)
+    g1 = 1 if sign(d4*sin(t2+t3) +a2*cos(t2) + a1) >= 0 else -1
+    g2 = 1 if sign(cos(t3)) >= 0 else -1
+    g3 = 1 if sign(t5) >= 0 else -1
     
     
-    #A[absolute(A)<tol] = 0
     return (A,[g1,g2,g3],[t1_act,t4_act])
 
 # In[]
-# problema inverso: los ángulos se devuelven en grados
+# problema iRMat2Eulnverso: los ángulos se devuelven en grados
 
 def pos_prob_inv(A,g1,g2,g3,t1_act=0,t4_act=0):
 
@@ -164,12 +172,8 @@ def pos_prob_inv(A,g1,g2,g3,t1_act=0,t4_act=0):
                                       # que es el ángulo t4 actual.
     
     # Pongo a t1, t2 y t3 en un vector
-    #t_1_2_3 = array([t1,t2,t3]) * 180/pi
     t_1_2_3 = array([t1,t2,t3])*180/pi
-    #t_1_2_3[absolute(t_1_2_3)<tol]  = 0 # agrego esto, no porque exista un error
-                                        # sino para que sea más fácil visualizar
-                                        # el resultado.
-    
+
     # Junto todos los resultados
     return concatenate([t_1_2_3, t_4_5_6])
     
@@ -270,24 +274,5 @@ pos_prob_inv(A,-1,-1,0,*t_act)
 g1 = g[0];g2 = g[1];g3 = g[2];
 t1_act=t_act[0];t4_act=t_act[1];
 pos_prob_inv(A,*g,*t_act)
-
-
-pos_prob_inv(A,-1,1,1,*t_act) # Este valor da que |sin(theta3)| > 1
-g1 = -1;g2 = -1;g3 = 1;
-
-
-
-
-
-### Prueba luego de corrección ###
-
-[A,g,t_act]= pos_prob_dir(0,-90,180,0,0,0)
-g1 = g[0];g2 = g[1];g3 = g[2];
-t1_act=t_act[0];t4_act=t_act[1];
-pos_prob_inv(A,*g,*t_act)
-pos_prob_inv(A,1,1,0,0,0)
-
-
-
 
 """

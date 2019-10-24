@@ -17,15 +17,17 @@ from tp2 import * # Importa todas las funciones del archivo 'tp1.py'
 
 # Cargo el archivo de prueba con la función loadtxt
 file_name = "variables_articulares_prueba.txt"
-datos_prueba = np.loadtxt(file_name, delimiter=',', skiprows=1)
-
+datos_prueba = np.loadtxt(file_name, delimiter=',',comments='#', skiprows=1)
+tol = 1e-6 # Tolerancia
 # Verificación: Primero se calcula la matrix de rotación y luego se aplica la operación inversa
 for ind, var_art in enumerate(datos_prueba):
     t1_act = var_art[0] # Defino phi_actu como el valor de phi que se están probando
     t4_act = var_art[3]
     A, g, t_act= pos_prob_dir(*var_art) # Calculo la matriz de rotación y el índice de configuración
+    g1 = g[0];g2 = g[1];g3 = g[2];
     
     """
+    
     print("DEBUG")
     print("Línea " + str(ind+2))
     print(var_art)
@@ -35,11 +37,24 @@ for ind, var_art in enumerate(datos_prueba):
     print("\n\n")
     """
     # Verifico si al resolver el problema inverso, se obtiene los mismos ángulos
-    
+    for g1_ in [1, -1]:
+        for g2_ in [1 , -1]:
+            for g3_ in [1,-1]:
+                var_art_res = pos_prob_inv(A,g1_,g2_,g3_,*t_act)
+                A_, g_, t_act_= pos_prob_dir(*var_art_res)
+                if ( not np.all(np.abs(A - A_) < tol)):
+                    print("Error para los ángulos que se encuentran en la línea: " + str(ind + 2))
+                    print("A de las variables articuladas")
+                    print(A)
+                    print("A_ de las variables articuladas")
+                    print(A_)
+                    print("\n\n\n")
+                    
+                
     # Calculo los ángulos de euler a partir de la matriz de rotación obtenida
-    var_art_res = pos_prob_inv(A,*g,*t_act)
+    #var_art_res = pos_prob_inv(A,*g,*t_act)
     #print(var_art_res)
-    tol = 1e-3 # Tolerancia
+    
     
     
     
@@ -60,9 +75,4 @@ for ind, var_art in enumerate(datos_prueba):
     # Devuelve True si y solo si todos los elementos de  np.abs(Euler_ang_res - Euler_ang) < tol
     # son True
     
-    if ( not np.all(np.abs(var_art_res - var_art) < tol)):
-        print("Error para los ángulos que se encuentran en la línea: " + str(ind + 2))
-        print("var_art= ")
-        print(var_art)
-        print("var_art_res= ")
-        print(var_art_res)
+    
